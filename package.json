@@ -1,0 +1,56 @@
+{
+  "name": "@opencdd/models",
+  "version": "0.1.0",
+  "description": "TypeScript value-object layer + validators for OpenCDD CDD — shared between browser and editor.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opencdd/cdd-models-ts.git"
+  },
+  "homepage": "https://github.com/opencdd/cdd-models-ts",
+  "bugs": {
+    "url": "https://github.com/opencdd/cdd-models-ts/issues"
+  },
+  "keywords": [
+    "cdd",
+    "iec",
+    "ontology",
+    "common-data-dictionary",
+    "opencdd",
+    "parcel",
+    "irdi"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
