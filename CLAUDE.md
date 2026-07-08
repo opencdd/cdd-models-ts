@@ -64,9 +64,9 @@ Trusted publishing via GitHub OIDC:
 
 1. **npm side (one-time)**: configure
    `@opencdd/models` to accept GitHub Actions OIDC tokens from
-   `opencdd/cdd-models-ts` `.github/workflows/publish.yml`. Done in
+   `opencdd/cdd-models-ts` `.github/workflows/release.yml`. Done in
    the npm web UI by the package owner.
-2. **GitHub side**: the publish workflow (`.github/workflows/publish.yml`)
+2. **GitHub side**: the publish workflow (`.github/workflows/release.yml`)
    has `id-token: write` permission and runs
    `npm publish --provenance --access public` on tag push.
 3. **To release**: push a tag (`v0.1.0`, `v0.2.0`, ...) — the
