@@ -1,6 +1,8 @@
 import { IRDI } from "./IRDI";
 import * as Pids from "./PropertyIds.generated";
 import { entityTypeFor, type EntityType } from "./MetaClasses.generated";
+import { Languages } from "./Languages";
+import { VersionHistory, type VersionHistoryEntry } from "./VersionHistory";
 
 export interface Dates {
   originalDefinition: string | undefined;
@@ -12,6 +14,8 @@ export interface EntityJSON {
   irdi: string | null;
   metaClassIrdi: string | null;
   properties: Record<string, unknown>;
+  versionHistory?: VersionHistoryEntry[];
+  languages?: { source: string; translations: string[] };
 }
 
 /**
@@ -26,6 +30,8 @@ export abstract class Entity {
   readonly properties: Map<string, unknown>;
   protected mutableIrdi: IRDI | null;
   private readonly cachedType: EntityType | undefined;
+  private versionHistoryValue: VersionHistory;
+  private languagesValue: Languages;
 
   constructor(
     irdi: IRDI | null,
@@ -35,6 +41,21 @@ export abstract class Entity {
     this.properties = new Map(Object.entries(properties));
     this.mutableIrdi = irdi;
     this.cachedType = metaClassIrdi ? entityTypeFor(metaClassIrdi) : undefined;
+    this.versionHistoryValue = new VersionHistory();
+    this.languagesValue = Languages.fromProperties(properties);
+  }
+
+  get versionHistory(): VersionHistory {
+    return this.versionHistoryValue;
+  }
+
+  get languages(): Languages {
+    return this.languagesValue;
+  }
+
+  attachVersionHistory(entries: VersionHistoryEntry[]): this {
+    this.versionHistoryValue = new VersionHistory(entries);
+    return this;
   }
 
   get irdi(): IRDI | null {
