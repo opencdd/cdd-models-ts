@@ -1,6 +1,6 @@
 {
   "name": "@opencdd/models",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript value-object layer + validators for OpenCDD CDD — shared between browser and editor.",
   "type": "module",
   "license": "MIT",
