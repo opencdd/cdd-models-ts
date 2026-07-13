@@ -11,6 +11,7 @@
 export * from "./models/index";
 export * from "./cddal/index";
 export * from "./exporters/index";
+export * from "./persistence/index";
 export {
   ParcelMetadata,
   SheetSchema,

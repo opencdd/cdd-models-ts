@@ -31,6 +31,8 @@ import { EnumStringType, EnumReferenceType } from "./DataType";
 import { parseIrdiList } from "./helpers";
 import { codePropertyIdFor } from "./codeProperty";
 import { referencePropertyIds, setOfRefsPropertyIds } from "./referenceKinds";
+import { databaseToYaml, databaseFromYaml } from "../persistence/YamlDatabase";
+import { saveToDirectory, loadFromDirectory } from "../persistence/EntityStore";
 
 export interface UnresolvedReference {
   readonly ref: string | null;
@@ -129,7 +131,10 @@ export class Database {
         }
       }
       for (const child of [...entity.children]) {
-        if (child instanceof Klass && child.parentIrdi?.equals(entity.irdi ?? IRDI.fromShort(""))) {
+        if (
+          child instanceof Klass &&
+          child.parentIrdi?.equals(entity.irdi ?? IRDI.fromShort(""))
+        ) {
           child.parentIrdi = null;
         }
       }
@@ -179,7 +184,10 @@ export class Database {
 
   find(irdi: IRDI | string | null | undefined): Entity | null {
     if (irdi === null || irdi === undefined) return null;
-    const key = irdi instanceof IRDI ? irdi.toString() : IRDI.parse(irdi)?.toString() ?? null;
+    const key =
+      irdi instanceof IRDI
+        ? irdi.toString()
+        : (IRDI.parse(irdi)?.toString() ?? null);
     if (key === null) return null;
     return this.entitiesByIrdi.get(key) ?? null;
   }
@@ -195,10 +203,16 @@ export class Database {
   }
 
   findByName(name: string, type?: EntityType, lang = "en"): Entity | null {
-    const pools = type ? [this.entitiesByType.get(type)].filter((p): p is Entity[] => p !== undefined) : [...this.entitiesByType.values()];
+    const pools = type
+      ? [this.entitiesByType.get(type)].filter(
+          (p): p is Entity[] => p !== undefined,
+        )
+      : [...this.entitiesByType.values()];
     const needle = name.toLowerCase();
     for (const pool of pools) {
-      const hit = pool.find((e) => (e.preferredName(lang) ?? "").toLowerCase() === needle);
+      const hit = pool.find(
+        (e) => (e.preferredName(lang) ?? "").toLowerCase() === needle,
+      );
       if (hit) return hit;
     }
     return null;
@@ -241,7 +255,9 @@ export class Database {
   }
 
   count(type?: EntityType): number {
-    return type ? (this.entitiesByType.get(type)?.length ?? 0) : this.entitiesByIrdi.size;
+    return type
+      ? (this.entitiesByType.get(type)?.length ?? 0)
+      : this.entitiesByIrdi.size;
   }
 
   rootClasses(): Klass[] {
@@ -264,15 +280,23 @@ export class Database {
 
   termsOf(valueList: ValueList | null): Entity[] {
     if (valueList === null) return [];
-    return valueList.termIrdis.map((i) => this.find(i)).filter((e): e is Entity => e !== null);
+    return valueList.termIrdis
+      .map((i) => this.find(i))
+      .filter((e): e is Entity => e !== null);
   }
 
-  relationsFor(domain?: Entity | IRDI | string | null, codomain?: Entity | IRDI | string | null): Relation[] {
+  relationsFor(
+    domain?: Entity | IRDI | string | null,
+    codomain?: Entity | IRDI | string | null,
+  ): Relation[] {
     const domainIrdi = asEntityIrdi(domain);
     const codomainIrdi = asEntityIrdi(codomain);
     return this.relations().filter((r) => {
-      const domainOk = !domainIrdi || r.domainIrdis.some((d) => d.equals(domainIrdi));
-      const codomainOk = !codomainIrdi || (r.codomainIrdi !== null && r.codomainIrdi.equals(codomainIrdi));
+      const domainOk =
+        !domainIrdi || r.domainIrdis.some((d) => d.equals(domainIrdi));
+      const codomainOk =
+        !codomainIrdi ||
+        (r.codomainIrdi !== null && r.codomainIrdi.equals(codomainIrdi));
       return domainOk && codomainOk;
     });
   }
@@ -280,11 +304,17 @@ export class Database {
   functionsInvolving(property: Property | IRDI | string): Relation[] {
     const irdi = asPropertyIrdi(property);
     if (!irdi) return [];
-    return this.relations().filter((r) => r.isFunction && (r.domainIrdis.some((d) => d.equals(irdi)) || (r.codomainIrdi !== null && r.codomainIrdi.equals(irdi))));
+    return this.relations().filter(
+      (r) =>
+        r.isFunction &&
+        (r.domainIrdis.some((d) => d.equals(irdi)) ||
+          (r.codomainIrdi !== null && r.codomainIrdi.equals(irdi))),
+    );
   }
 
   merge(other: Database): this {
-    if (!(other instanceof Database)) throw new TypeError("merge expects a Database");
+    if (!(other instanceof Database))
+      throw new TypeError("merge expects a Database");
     for (const e of other.entities()) this.addEntity(e);
     return this.finalize();
   }
@@ -306,13 +336,36 @@ export class Database {
     });
   }
 
+  toYaml(): string {
+    return databaseToYaml(this);
+  }
+
+  static fromYaml(yaml: string): Database {
+    return databaseFromYaml(yaml);
+  }
+
+  async saveToDirectory(path: string): Promise<void> {
+    await saveToDirectory(this, path);
+  }
+
+  static async loadFromDirectory(path: string): Promise<Database> {
+    return loadFromDirectory(path);
+  }
+
   renameEntity(oldCode: string, newCode: string): this {
     if (oldCode === newCode) return this;
     const target = this.findByCode(oldCode);
     if (!target) return this;
     const clash = this.findByCode(newCode);
-    if (clash && clash.irdi !== null && target.irdi !== null && !clash.irdi.equals(target.irdi)) {
-      console.warn(`Cannot rename ${oldCode} → ${newCode}: target code already in use by ${clash.irdi.toString()}`);
+    if (
+      clash &&
+      clash.irdi !== null &&
+      target.irdi !== null &&
+      !clash.irdi.equals(target.irdi)
+    ) {
+      console.warn(
+        `Cannot rename ${oldCode} → ${newCode}: target code already in use by ${clash.irdi.toString()}`,
+      );
       return this;
     }
     const oldIrdi = target.irdi;
@@ -349,10 +402,17 @@ export class Database {
 
   private bindSymbol(name: string, entity: Entity): void {
     const existing = this.symbolTable.get(name);
-    if (existing !== undefined && (existing.irdi === null || entity.irdi === null || !existing.irdi.equals(entity.irdi))) {
+    if (
+      existing !== undefined &&
+      (existing.irdi === null ||
+        entity.irdi === null ||
+        !existing.irdi.equals(entity.irdi))
+    ) {
       const existingIrdi = existing.irdi?.toString() ?? "null";
       const newIrdi = entity.irdi?.toString() ?? "null";
-      console.warn(`Symbol ${JSON.stringify(name)} already bound to ${existingIrdi}; ignoring rebind to ${newIrdi}`);
+      console.warn(
+        `Symbol ${JSON.stringify(name)} already bound to ${existingIrdi}; ignoring rebind to ${newIrdi}`,
+      );
       return;
     }
     this.symbolTable.set(name, entity);
@@ -372,7 +432,10 @@ export class Database {
         const s = String(val).trim();
         if (!s.startsWith("(") || !s.endsWith(")")) continue;
         const inner = s.slice(1, -1);
-        const elements = inner.split(",").map((x) => x.trim()).filter((x) => x.length > 0);
+        const elements = inner
+          .split(",")
+          .map((x) => x.trim())
+          .filter((x) => x.length > 0);
         entity.setPropertyValue(pid, `{${elements.join(",")}}`);
       }
     }
@@ -404,12 +467,18 @@ export class Database {
         const dst = this.find(codomainIrdi);
         if (!src || !dst) continue;
         if (src instanceof Klass && dst instanceof Property) {
-          if (dst.irdi && !src.declaredPropertyIrdis.some((i) => i.equals(dst.irdi!))) {
+          if (
+            dst.irdi &&
+            !src.declaredPropertyIrdis.some((i) => i.equals(dst.irdi!))
+          ) {
             src.declaredPropertyIrdis.push(dst.irdi!);
           }
           linkPropertyClass(this.classByPropertyIrdi, dst.irdi!, src);
         } else if (src instanceof Property && dst instanceof Klass) {
-          if (src.irdi && !dst.declaredPropertyIrdis.some((i) => i.equals(src.irdi!))) {
+          if (
+            src.irdi &&
+            !dst.declaredPropertyIrdis.some((i) => i.equals(src.irdi!))
+          ) {
             dst.declaredPropertyIrdis.push(src.irdi!);
           }
           linkPropertyClass(this.classByPropertyIrdi, src.irdi!, dst);
@@ -423,7 +492,8 @@ export class Database {
       if (!prop.isEnum) continue;
       const dt = prop.dataTypeParsed;
       if (dt === null || typeof dt === "string") continue;
-      if (!(dt instanceof EnumStringType) && !(dt instanceof EnumReferenceType)) continue;
+      if (!(dt instanceof EnumStringType) && !(dt instanceof EnumReferenceType))
+        continue;
       const target = this.resolveReference(dt.valueListIdentifier);
       if (target instanceof ValueList && prop.irdi) {
         linkPropertyClass(this.classByPropertyIrdi, prop.irdi, target);
@@ -432,14 +502,23 @@ export class Database {
   }
 }
 
-function linkPropertyClass(map: Map<string, Entity[]>, propertyIrdi: IRDI, owner: Entity): void {
+function linkPropertyClass(
+  map: Map<string, Entity[]>,
+  propertyIrdi: IRDI,
+  owner: Entity,
+): void {
   const key = propertyIrdi.toString();
   const list = map.get(key) ?? [];
   if (!list.includes(owner)) list.push(owner);
   map.set(key, list);
 }
 
-function rewriteBackReferences(entity: Entity, oldIrdi: IRDI, newIrdi: IRDI, refPropertyIds: readonly string[]): void {
+function rewriteBackReferences(
+  entity: Entity,
+  oldIrdi: IRDI,
+  newIrdi: IRDI,
+  refPropertyIds: readonly string[],
+): void {
   for (const pid of refPropertyIds) {
     const raw = entity.properties.get(pid);
     if (raw === undefined) continue;
@@ -447,12 +526,16 @@ function rewriteBackReferences(entity: Entity, oldIrdi: IRDI, newIrdi: IRDI, ref
     if (!entry) continue;
     if (entry.valueKind === "identifier_ref") {
       const parsed = IRDI.parse(String(raw));
-      if (parsed && parsed.equals(oldIrdi)) entity.setPropertyValue(pid, newIrdi.toString());
+      if (parsed && parsed.equals(oldIrdi))
+        entity.setPropertyValue(pid, newIrdi.toString());
     } else if (entry.valueKind === "set_of_refs") {
       const elements = parseIrdiList(raw);
       if (elements.length === 0) continue;
       const mapped = elements.map((i) => (i.equals(oldIrdi) ? newIrdi : i));
-      entity.setPropertyValue(pid, `{${mapped.map((i) => i.toString()).join(",")}}`);
+      entity.setPropertyValue(
+        pid,
+        `{${mapped.map((i) => i.toString()).join(",")}}`,
+      );
     } else if (entry.valueKind === "class_ref") {
       const out = substituteClassRefValue(String(raw), oldIrdi, newIrdi);
       entity.setPropertyValue(pid, out);
@@ -460,7 +543,9 @@ function rewriteBackReferences(entity: Entity, oldIrdi: IRDI, newIrdi: IRDI, ref
   }
 }
 
-function asEntityIrdi(arg: Entity | IRDI | string | null | undefined): IRDI | null {
+function asEntityIrdi(
+  arg: Entity | IRDI | string | null | undefined,
+): IRDI | null {
   if (arg instanceof Entity) return arg.irdi;
   if (arg instanceof IRDI) return arg;
   if (arg === null || arg === undefined) return null;
@@ -473,7 +558,11 @@ function asPropertyIrdi(arg: Property | IRDI | string): IRDI | null {
   return IRDI.parse(arg);
 }
 
-function substituteClassRefValue(raw: string, oldIrdi: IRDI, newIrdi: IRDI): string {
+function substituteClassRefValue(
+  raw: string,
+  oldIrdi: IRDI,
+  newIrdi: IRDI,
+): string {
   const out = raw.replace(oldIrdi.toString(), newIrdi.toString());
   if (oldIrdi.code === null || oldIrdi.code === newIrdi.code) return out;
   return out.replace(oldIrdi.code, newIrdi.code);
