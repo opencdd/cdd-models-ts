@@ -71,6 +71,8 @@ export {
   serializeConditionValue,
   parseValueFormat,
   serializeValueFormat,
+  unwrapAndSplit,
+  rejoin,
   type SynonymPair,
 } from "./StructuredValues";
 export * as MetaClass from "./MetaClass";

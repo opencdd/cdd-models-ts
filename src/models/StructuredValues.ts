@@ -15,7 +15,9 @@ export function parseSynonyms(value: unknown): SynonymPair[] {
   return parseSynonymTuples(s);
 }
 
-export function serializeSynonyms(pairs: readonly SynonymPair[] | null): string {
+export function serializeSynonyms(
+  pairs: readonly SynonymPair[] | null,
+): string {
   if (!pairs || pairs.length === 0) return "";
   const tuples = pairs.map((p) => `(${p.name},${p.lang})`);
   return `{${tuples.join(",")}}`;
@@ -34,9 +36,13 @@ export function parseRefSet(value: unknown): IRDI[] {
     .filter((irdi): irdi is IRDI => irdi !== null);
 }
 
-export function serializeRefSet(irdis: readonly (IRDI | string)[] | null): string {
+export function serializeRefSet(
+  irdis: readonly (IRDI | string)[] | null,
+): string {
   if (!irdis || irdis.length === 0) return "";
-  const elements = irdis.map((i) => (i instanceof IRDI ? i.toString() : String(i)));
+  const elements = irdis.map((i) =>
+    i instanceof IRDI ? i.toString() : String(i),
+  );
   return `{${elements.join(",")}}`;
 }
 
@@ -115,12 +121,36 @@ function parseSingleSynonymTuple(raw: string): SynonymPair | null {
   const s = raw.trim();
   if (!s.startsWith("(") || !s.endsWith(")")) return null;
   const inner = s.slice(1, -1).trim();
-  const parts = splitTopLevel(inner);
+  const parts = splitAtTopLevelCommas(inner);
   if (parts.length < 2) return null;
   return { name: unquotePart(parts[0]), lang: unquotePart(parts[1]) };
 }
 
-function splitTopLevel(s: string): string[] {
+export function unwrapAndSplit(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+  const s = String(value).trim();
+  if (s.length === 0) return [];
+  const unwrapped =
+    (s.startsWith("{") && s.endsWith("}")) ||
+    (s.startsWith("(") && s.endsWith(")"))
+      ? s.slice(1, -1)
+      : s;
+  return splitAtTopLevelCommas(unwrapped);
+}
+
+export function rejoin(
+  elements: readonly (string | IRDI)[] | null | undefined,
+): string {
+  if (!elements || elements.length === 0) return "";
+  const strs = elements
+    .map((e) => (e instanceof IRDI ? e.toString() : String(e)))
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (strs.length === 0) return "";
+  return `{${strs.join(",")}}`;
+}
+
+function splitAtTopLevelCommas(s: string): string[] {
   const out: string[] = [];
   let depth = 0;
   let inQuote: string | null = null;
