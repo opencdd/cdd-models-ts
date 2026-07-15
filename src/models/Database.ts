@@ -37,6 +37,7 @@ import { RelationTree } from "./RelationTree";
 import { EffectiveProperties } from "./EffectiveProperties";
 import { databaseToYaml, databaseFromYaml } from "../persistence/YamlDatabase";
 import { saveToDirectory, loadFromDirectory } from "../persistence/EntityStore";
+import { DatabaseLinker } from "./DatabaseLinker";
 
 export interface UnresolvedReference {
   readonly ref: string | null;
@@ -184,13 +185,18 @@ export class Database {
 
   finalize(): this {
     if (this.finalized) return this;
-    this.normalizeReferenceCollections();
-    this.linkClassHierarchy();
-    this.linkPropertyClasses();
-    this.linkValueLists();
-    this.rebuildSymbolTable();
+    new DatabaseLinker(this).linkAll();
     this.finalized = true;
     return this;
+  }
+
+  /**
+   * @internal Used by DatabaseLinker at the end of linkAll() so the
+   * symbol table reflects the post-link entity graph. Public-only
+   * because DatabaseLinker lives in a sibling file.
+   */
+  rebuildSymbolTableForLinker(): void {
+    this.rebuildSymbolTable();
   }
 
   find(irdi: IRDI | string | null | undefined): Entity | null {
@@ -233,6 +239,17 @@ export class Database {
     return (this.entitiesByType.get("class") ?? []) as Klass[];
   }
 
+  /**
+   * Iterator over classes — avoids the array allocation that
+   * `classes()` incurs. Use in hot paths that iterate per-frame or
+   * inside other loops.
+   */
+  eachClass(): IterableIterator<Klass> {
+    return (this.entitiesByType.get("class") ?? [])[
+      Symbol.iterator
+    ]() as IterableIterator<Klass>;
+  }
+
   properties(): Property[] {
     return (this.entitiesByType.get("property") ?? []) as Property[];
   }
@@ -263,6 +280,14 @@ export class Database {
 
   entities(): Entity[] {
     return [...this.entitiesByIrdi.values()];
+  }
+
+  /**
+   * Iterator over every entity — avoids the array allocation that
+   * `entities()` incurs on every call. Use in hot paths.
+   */
+  eachEntity(): IterableIterator<Entity> {
+    return this.entitiesByIrdi.values();
   }
 
   count(type?: EntityType): number {
@@ -326,6 +351,17 @@ export class Database {
     const irdi = asPropertyIrdi(property);
     if (!irdi) return [];
     return [...(this.classByPropertyIrdi.get(irdi.toString()) ?? [])];
+  }
+
+  /**
+   * Registers an entity as the owner of a property (used by the
+   * DatabaseLinker during the linkValueLists and linkPropertyClasses
+   * passes). Public so an external linker can populate the index
+   * without touching internal state directly.
+   */
+  registerPropertyOwner(propertyIrdi: IRDI, owner: Entity): this {
+    linkPropertyClass(this.classByPropertyIrdi, propertyIrdi, owner);
+    return this;
   }
 
   termsOf(valueList: ValueList | null): Entity[] {
@@ -474,84 +510,6 @@ export class Database {
     // preferred-name + code symbols (idempotent — bindSymbol
     // warns on conflict).
     for (const e of this.entities()) this.registerEntitySymbols(e);
-  }
-
-  private normalizeReferenceCollections(): void {
-    const setPropertyIds = setOfRefsPropertyIds();
-    for (const entity of this.entities()) {
-      for (const pid of setPropertyIds) {
-        const val = entity.properties.get(pid);
-        if (val === undefined) continue;
-        const s = String(val).trim();
-        if (!s.startsWith("(") || !s.endsWith(")")) continue;
-        const inner = s.slice(1, -1);
-        const elements = inner
-          .split(",")
-          .map((x) => x.trim())
-          .filter((x) => x.length > 0);
-        entity.setPropertyValue(pid, `{${elements.join(",")}}`);
-      }
-    }
-  }
-
-  private linkClassHierarchy(): void {
-    for (const klass of this.classes()) {
-      if (klass.parentIrdi !== null) continue;
-      const parentId = klass.parentPropertyId;
-      const parentRaw = klass.properties.get(parentId);
-      if (parentRaw === undefined) continue;
-      const s = String(parentRaw).trim();
-      if (s.length === 0) continue;
-      const target = this.resolveReference(s);
-      if (!target || !(target instanceof Klass)) continue;
-      klass.parentIrdi = target.irdi;
-      if (!target.children.includes(klass)) target.children.push(klass);
-    }
-  }
-
-  private linkPropertyClasses(): void {
-    for (const r of this.relations()) {
-      if (!r.isPredication && !r.isFunction) continue;
-      if (r.domainIrdis.length === 0) continue;
-      const codomainIrdi = r.codomainIrdi;
-      if (codomainIrdi === null) continue;
-      for (const d of r.domainIrdis) {
-        const src = this.find(d);
-        const dst = this.find(codomainIrdi);
-        if (!src || !dst) continue;
-        if (src instanceof Klass && dst instanceof Property) {
-          if (
-            dst.irdi &&
-            !src.declaredPropertyIrdis.some((i) => i.equals(dst.irdi!))
-          ) {
-            src.declaredPropertyIrdis.push(dst.irdi!);
-          }
-          linkPropertyClass(this.classByPropertyIrdi, dst.irdi!, src);
-        } else if (src instanceof Property && dst instanceof Klass) {
-          if (
-            src.irdi &&
-            !dst.declaredPropertyIrdis.some((i) => i.equals(src.irdi!))
-          ) {
-            dst.declaredPropertyIrdis.push(src.irdi!);
-          }
-          linkPropertyClass(this.classByPropertyIrdi, src.irdi!, dst);
-        }
-      }
-    }
-  }
-
-  private linkValueLists(): void {
-    for (const prop of this.properties()) {
-      if (!prop.isEnum) continue;
-      const dt = prop.dataTypeParsed;
-      if (dt === null || typeof dt === "string") continue;
-      if (!(dt instanceof EnumStringType) && !(dt instanceof EnumReferenceType))
-        continue;
-      const target = this.resolveReference(dt.valueListIdentifier);
-      if (target instanceof ValueList && prop.irdi) {
-        linkPropertyClass(this.classByPropertyIrdi, prop.irdi, target);
-      }
-    }
   }
 }
 

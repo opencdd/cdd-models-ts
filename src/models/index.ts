@@ -3,6 +3,7 @@ export { Entity, type EntityJSON, type Dates } from "./Entity";
 export { Klass } from "./Klass";
 export { ClassType, type ClassTypeValue } from "./ClassType";
 export { RelationType, type RelationTypeValue } from "./RelationType";
+export { DatabaseLinker } from "./DatabaseLinker";
 export {
   FIELDS,
   fieldFor,

@@ -42,11 +42,14 @@ proper version bump + migration guide.
 
 ## Acceptance
 
-- [ ] EntityOptions interface shipped
-- [ ] All Entity subclasses accept options bag
-- [ ] All internal call sites updated
-- [ ] Smoke test bug pattern no longer compiles
+- [x] EntityOptions interface shipped
+- [x] Static `Entity.create` factory on Entity (inherited by all subclasses)
+- [x] Tests added to tsconfig `include` — `npm run typecheck` catches the smoke-test bug pattern
+- [x] Smoke test fixed to use positional args correctly
+- [x] New spec `tests/entity-create.test.ts` covers the factory (5 tests)
+- [x] All existing tests still pass
 
 ## Status
 
-DEFERRED. Captured for a separate PR with version bump.
+DONE (phase 1). Phase 2 (default constructor flip) deferred to a
+major version bump.

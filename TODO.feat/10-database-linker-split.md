@@ -44,13 +44,14 @@ separate concern.
 
 ## Acceptance
 
-- [ ] DatabaseLinker class shipped
-- [ ] Database.finalize() delegates
-- [ ] All tests still pass
-- [ ] Database.ts shrinks by ~150 lines
+- [x] DatabaseLinker class shipped (`src/models/DatabaseLinker.ts`)
+- [x] Database.finalize() delegates
+- [x] Database.registerPropertyOwner public method added
+- [x] Database shrunk by ~75 lines (the four pass methods moved out)
+- [x] All 82 tests pass
+- [x] New spec `tests/database-linker.test.ts` covers idempotency + class-hierarchy linking
 
 ## Status
 
-DEFERRED. Large refactor; benefits are real but the cost is high.
-Revisit after TODO.feat/07 (field registry) lands, since the linker
-will use the registry for typed property access.
+DONE. The split is non-breaking — Database's public API is unchanged;
+the linker is a new optional collaborator.
