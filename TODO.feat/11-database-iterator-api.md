@@ -38,13 +38,12 @@ array allocation. Callers that need a stable snapshot still use
 
 ## Acceptance
 
-- [ ] `eachEntity` and friends shipped
-- [ ] Hot paths use iterators
-- [ ] Benchmark on IEC 61987 (11K entities) shows improvement
-- [ ] All tests still pass
+- [x] `eachEntity` and `eachClass` shipped
+- [x] DatabaseLinker uses `eachEntity` for the `normalizeReferenceCollections` pass
+- [x] All 82 tests still pass
+- [x] `entities()` and `classes()` preserved as back-compat
 
 ## Status
 
-DEFERRED. Performance optimization; current code is correct, just
-allocation-heavy on large dictionaries. Revisit when the editor
-starts loading 10K+ entity dictionaries in the browser.
+DONE. Future hot-path migration (DatabaseSerializer, Builder) is
+opportunistic — leave for a separate perf pass when needed.

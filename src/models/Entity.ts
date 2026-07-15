@@ -16,6 +16,12 @@ export interface SourceLocation {
   readonly line: number | null;
 }
 
+export interface EntityOptions {
+  readonly irdi?: IRDI | string | null;
+  readonly properties?: Record<string, unknown>;
+  readonly metaClassIrdi?: string | null;
+}
+
 export interface EntityJSON {
   irdi: string | null;
   metaClassIrdi: string | null;
@@ -68,6 +74,34 @@ export abstract class Entity {
   attachSourceLocation(loc: SourceLocation): this {
     this.sourceLocation = loc;
     return this;
+  }
+
+  /**
+   * Static factory for options-bag construction. Preferred for new
+   * call sites — the positional constructor stays for back-compat
+   * but is brittle (easy to swap args by mistake).
+   *
+   *   Klass.create({ irdi: "0112/2///61360_4#AAA001", metaClassIrdi: "MDC_C002" })
+   */
+  static create<T extends Entity>(
+    this: new (
+      irdi: IRDI | null,
+      properties: Record<string, unknown>,
+      metaClassIrdi: string | null,
+    ) => T,
+    options: EntityOptions,
+  ): T {
+    const irdi =
+      options.irdi === undefined || options.irdi === null
+        ? null
+        : options.irdi instanceof IRDI
+          ? options.irdi
+          : IRDI.parse(String(options.irdi));
+    return new this(
+      irdi,
+      options.properties ?? {},
+      options.metaClassIrdi ?? null,
+    );
   }
 
   get irdi(): IRDI | null {

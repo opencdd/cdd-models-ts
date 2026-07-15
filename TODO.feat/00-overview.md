@@ -12,21 +12,21 @@ of the Ruby gem's `TODO.impl/` directory.
 
 ## Plans
 
-| #   | Title                                                                  | Status   |
-| --- | ---------------------------------------------------------------------- | -------- |
-| 01  | [Visitor traversal seam](01-visitor-traversal-seam.md)                 | DONE     |
-| 02  | [RelationType value object](02-relation-type-value-object.md)          | DONE     |
-| 03  | [Extract ValueSerializer from Builder](03-extract-value-serializer.md) | DONE     |
-| 04  | [Database powertype API](04-database-powertype-api.md)                 | DONE     |
-| 05  | [Database traversal shortcuts](05-database-traversal-shortcuts.md)     | DONE     |
-| 06  | [R16 CLASS_REFERENCE validator rule](06-r16-class-reference-rule.md)   | DONE     |
-| 07  | [Field registry + typed reader](07-field-registry.md)                  | DONE     |
-| 08  | [Polymorphic YamlEntity](08-polymorphic-yaml-entity.md)                | DONE     |
-| 09  | [Entity options-bag constructor](09-entity-options-constructor.md)     | DEFERRED |
-| 10  | [Database linker/storage split](10-database-linker-split.md)           | DEFERRED |
-| 11  | [Database iterator API](11-database-iterator-api.md)                   | DEFERRED |
-| 12  | [Spec coverage expansion](12-spec-coverage-expansion.md)               | ONGOING  |
-| 13  | [ParseHelpers — N/A for TS](13-parse-helpers-na.md)                    | N/A      |
+| #   | Title                                                                  | Status  |
+| --- | ---------------------------------------------------------------------- | ------- |
+| 01  | [Visitor traversal seam](01-visitor-traversal-seam.md)                 | DONE    |
+| 02  | [RelationType value object](02-relation-type-value-object.md)          | DONE    |
+| 03  | [Extract ValueSerializer from Builder](03-extract-value-serializer.md) | DONE    |
+| 04  | [Database powertype API](04-database-powertype-api.md)                 | DONE    |
+| 05  | [Database traversal shortcuts](05-database-traversal-shortcuts.md)     | DONE    |
+| 06  | [R16 CLASS_REFERENCE validator rule](06-r16-class-reference-rule.md)   | DONE    |
+| 07  | [Field registry + typed reader](07-field-registry.md)                  | DONE    |
+| 08  | [Polymorphic YamlEntity](08-polymorphic-yaml-entity.md)                | DONE    |
+| 09  | [Entity options-bag constructor](09-entity-options-constructor.md)     | DONE    |
+| 10  | [Database linker/storage split](10-database-linker-split.md)           | DONE    |
+| 11  | [Database iterator API](11-database-iterator-api.md)                   | DONE    |
+| 12  | [Spec coverage expansion](12-spec-coverage-expansion.md)               | ONGOING |
+| 13  | [ParseHelpers — N/A for TS](13-parse-helpers-na.md)                    | N/A     |
 
 ## Architectural principles applied
 

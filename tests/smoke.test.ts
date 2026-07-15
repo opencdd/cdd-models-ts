@@ -49,11 +49,11 @@ describe("package public surface", () => {
   });
 
   it("can construct a Database and finalize it without error", () => {
-    const klass = new Models.Klass({
-      irdi: "0112/2///61360_4#AAA001",
-      code: "AAA001",
-      preferredName: "Test class",
-    });
+    const klass = new Models.Klass(
+      Models.IRDI.parse("0112/2///61360_4#AAA001"),
+      { "MDC_P004.en": "Test class" },
+      "MDC_C002",
+    );
     const db = new Models.Database();
     db.addEntity(klass);
     expect(() => db.finalize()).not.toThrow();
