@@ -9,6 +9,7 @@
 
 import type { Rule, ValidationContext } from "../Rule";
 import * as Pids from "../../models/PropertyIds.generated";
+import { IRDI } from "../../models/IRDI";
 import { isEmpty, rubyInspect } from "./shared";
 
 export class R02UniquenessRule implements Rule {
@@ -29,8 +30,11 @@ export class R02UniquenessRule implements Rule {
     if (!db || !type) return true;
     const s = String(value).trim();
     if (s.length === 0) return true;
+    // Normalize: the code column may carry a full IRDI or a short code.
+    // Compare on the short-form code so both shapes agree.
+    const targetCode = IRDI.parse(s)?.code ?? s;
     const peers = db.entitiesOfType(type).filter((e) => e.code !== undefined);
-    const count = peers.filter((e) => (e.code ?? "") === s).length;
+    const count = peers.filter((e) => (e.code ?? "") === targetCode).length;
     return count === 1;
   }
 

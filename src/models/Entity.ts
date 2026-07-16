@@ -2,7 +2,10 @@ import { IRDI } from "./IRDI";
 import * as Pids from "./PropertyIds.generated";
 import { entityTypeFor, type EntityType } from "./MetaClasses.generated";
 import { Languages } from "./Languages";
-import { VersionHistory, type VersionHistoryEntry } from "./VersionHistory";
+import {
+  VersionHistory,
+  type VersionHistoryClassEntry,
+} from "./VersionHistory";
 import { fieldFor } from "./FieldRegistry";
 
 export interface Dates {
@@ -26,7 +29,7 @@ export interface EntityJSON {
   irdi: string | null;
   metaClassIrdi: string | null;
   properties: Record<string, unknown>;
-  versionHistory?: VersionHistoryEntry[];
+  versionHistory?: VersionHistoryClassEntry[];
   languages?: { source: string; translations: string[] };
 }
 
@@ -66,7 +69,7 @@ export abstract class Entity {
     return this.languagesValue;
   }
 
-  attachVersionHistory(entries: VersionHistoryEntry[]): this {
+  attachVersionHistory(entries: VersionHistoryClassEntry[]): this {
     this.versionHistoryValue = new VersionHistory(entries);
     return this;
   }

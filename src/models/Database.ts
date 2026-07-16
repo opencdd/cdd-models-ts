@@ -37,6 +37,7 @@ import { RelationTree } from "./RelationTree";
 import { EffectiveProperties } from "./EffectiveProperties";
 import { databaseToYaml, databaseFromYaml } from "../persistence/YamlDatabase";
 import { saveToDirectory, loadFromDirectory } from "../persistence/EntityStore";
+import { databaseFromJson, databaseToJson } from "../persistence/JsonDatabase";
 import { DatabaseLinker } from "./DatabaseLinker";
 
 export interface UnresolvedReference {
@@ -428,6 +429,14 @@ export class Database {
 
   static fromYaml(yaml: string): Database {
     return databaseFromYaml(yaml);
+  }
+
+  toJson(): string {
+    return databaseToJson(this);
+  }
+
+  static fromJson(json: string): Database {
+    return databaseFromJson(json);
   }
 
   async saveToDirectory(path: string): Promise<void> {

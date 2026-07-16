@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Languages } from "../src/models/Languages";
 import {
   VersionHistory,
-  type VersionHistoryEntry,
+  type VersionHistoryClassEntry,
 } from "../src/models/VersionHistory";
 
 describe("Languages", () => {
@@ -53,7 +53,7 @@ describe("Languages", () => {
 });
 
 describe("VersionHistory", () => {
-  const entries: VersionHistoryEntry[] = [
+  const entries: VersionHistoryClassEntry[] = [
     {
       version: "001",
       revision: "04",

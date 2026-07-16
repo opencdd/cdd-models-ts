@@ -4,8 +4,14 @@
  *
  * Ported from Cdd::Entity::VersionHistory (lib/cdd/entity/version_history.rb).
  * Each entry represents one historical version of the entity.
+ *
+ * Note: this is the class-backed entry shape with camelCase fields,
+ * used by the interactive `VersionHistory` class below. The wire
+ * format (snake_case) lives in `./jsonTypes.ts` as
+ * `VersionHistoryEntry`. The two are deliberately separate types so
+ * the model layer can evolve independently of the JSON shape.
  */
-export interface VersionHistoryEntry {
+export interface VersionHistoryClassEntry {
   version: string | null;
   revision: string | null;
   status: string | null;
@@ -17,9 +23,9 @@ export interface VersionHistoryEntry {
 }
 
 export class VersionHistory {
-  readonly entries: readonly VersionHistoryEntry[];
+  readonly entries: readonly VersionHistoryClassEntry[];
 
-  constructor(entries: readonly VersionHistoryEntry[] = []) {
+  constructor(entries: readonly VersionHistoryClassEntry[] = []) {
     this.entries = Array.from(entries);
     Object.freeze(this);
   }
@@ -32,20 +38,20 @@ export class VersionHistory {
     return this.entries.length === 0;
   }
 
-  get current(): VersionHistoryEntry | undefined {
+  get current(): VersionHistoryClassEntry | undefined {
     return this.entries.find((e) => e.isCurrent) ?? this.entries[0];
   }
 
-  get previous(): readonly VersionHistoryEntry[] {
+  get previous(): readonly VersionHistoryClassEntry[] {
     const cur = this.current;
     return this.entries.filter((e) => e !== cur);
   }
 
-  toArray(): VersionHistoryEntry[] {
+  toArray(): VersionHistoryClassEntry[] {
     return [...this.entries];
   }
 
-  [Symbol.iterator](): Iterator<VersionHistoryEntry> {
+  [Symbol.iterator](): Iterator<VersionHistoryClassEntry> {
     return this.entries[Symbol.iterator]();
   }
 }
