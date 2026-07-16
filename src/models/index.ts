@@ -99,5 +99,8 @@ export {
 } from "./StructuredValues";
 export * as MetaClass from "./MetaClass";
 export { Languages } from "./Languages";
-export { VersionHistory, type VersionHistoryEntry } from "./VersionHistory";
+export {
+  VersionHistory,
+  type VersionHistoryClassEntry,
+} from "./VersionHistory";
 export * from "./jsonTypes";

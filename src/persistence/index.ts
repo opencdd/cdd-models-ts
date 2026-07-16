@@ -9,3 +9,8 @@ export {
   type YamlDatabaseData,
 } from "./YamlDatabase";
 export { saveToDirectory, loadFromDirectory } from "./EntityStore";
+export {
+  databaseFromJson,
+  databaseToJson,
+  type JsonObject,
+} from "./JsonDatabase";

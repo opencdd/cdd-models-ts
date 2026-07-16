@@ -105,7 +105,7 @@ export function yamlEntityFromEntity(entity: Entity): YamlEntityData {
     }
   }
 
-  const extra = extractExtra(entity);
+  const extra = extractExtra(entity, entity.type ?? "class");
   if (extra) data.extra = extra;
 
   return data;
@@ -193,6 +193,13 @@ function populateMl(
   spec: FieldSpec,
   value: unknown,
 ): void {
+  // Plain string → default to source language (en). Some JSON shapes
+  // (oceanrunner) carry ml fields as bare strings rather than {lang: text}
+  // hashes. Accept both.
+  if (typeof value === "string") {
+    if (value.length > 0) props[`${spec.propertyId}.en`] = value;
+    return;
+  }
   if (!value || typeof value !== "object") return;
   for (const [lang, v] of Object.entries(value as Record<string, unknown>)) {
     if (v !== undefined && v !== null)
@@ -209,22 +216,34 @@ function populateSetOfRefs(
   props[spec.propertyId] = rejoin(value);
 }
 
-const KNOWN_WIRE_BASES = computeKnownWireBases();
+const KNOWN_WIRE_BASES_BY_TYPE: Readonly<
+  Record<EntityType, ReadonlySet<string>>
+> = computeKnownWireBasesByType();
 
-function computeKnownWireBases(): Set<string> {
-  const set = new Set<string>();
-  for (const fieldList of Object.values(FIELDS)) {
-    for (const spec of fieldList) set.add(spec.propertyId);
+function computeKnownWireBasesByType(): Readonly<
+  Record<EntityType, ReadonlySet<string>>
+> {
+  const out: Record<string, Set<string>> = {};
+  for (const [type, fields] of Object.entries(FIELDS)) {
+    const set = new Set<string>();
+    for (const spec of fields) set.add(spec.propertyId);
+    out[type] = set;
   }
-  return set;
+  return Object.freeze(out) as Readonly<
+    Record<EntityType, ReadonlySet<string>>
+  >;
 }
 
-function extractExtra(entity: Entity): Record<string, unknown> | undefined {
+function extractExtra(
+  entity: Entity,
+  type: EntityType,
+): Record<string, unknown> | undefined {
   const extra: Record<string, unknown> = {};
+  const known = KNOWN_WIRE_BASES_BY_TYPE[type] ?? new Set<string>();
   entity.eachProperty((key, value) => {
     if (key === "__row_index__") return;
     const base = key.split(".", 1)[0];
-    if (KNOWN_WIRE_BASES.has(base)) return;
+    if (known.has(base)) return;
     extra[key] = value;
   });
   return Object.keys(extra).length > 0 ? extra : undefined;
