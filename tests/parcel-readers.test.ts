@@ -18,16 +18,18 @@ const REFERENCE_DOCS = resolve(here, "../../cdd-data/reference-docs");
 const RUN = existsSync(CDD_DATA_DIR);
 const describeIf = RUN ? describe : describe.skip;
 
-describeIf("Parcel xlsx reader", () => {
-  const dicts = readdirSync(CDD_DATA_DIR).filter((d) => {
-    const p = resolve(CDD_DATA_DIR, d, "parcel");
-    return existsSync(p) && statSync(p).isDirectory();
-  });
+const parcelDicts = RUN
+  ? readdirSync(CDD_DATA_DIR).filter((d) => {
+      const p = resolve(CDD_DATA_DIR, d, "parcel");
+      return existsSync(p) && statSync(p).isDirectory();
+    })
+  : [];
 
-  for (const dict of dicts.sort()) {
+describeIf("Parcel xlsx reader", () => {
+  for (const dict of parcelDicts.sort()) {
     describe(dict, () => {
       const parcelDir = resolve(CDD_DATA_DIR, dict, "parcel");
-      const files = readdirSync(parcelDir).filter((f) => f.endsWith(".xlsx"));
+      const files = RUN ? readdirSync(parcelDir).filter((f) => f.endsWith(".xlsx")) : [];
 
       for (const file of files) {
         const path = resolve(parcelDir, file);
